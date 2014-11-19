@@ -20,26 +20,31 @@ const QString DataGraph::GetID()
     return (const QString)this->identification.second;
 }
 
-const QMap<QString, QColor> DataGraph::GetlottableData()
+QList<DataGraph::PlottableData> DataGraph::GetPlottableData()
 {
-    return(const QMap<QString, QColor>)this->plottableData;
+    return this->plottableData;
 }
 
-QList<DataGraph::PlottableData> DataGraph::GetPlottableIDs()
+QList<QString> DataGraph::GetPlottableIDs()
 {
     QList<QString> ids;
     ids.clear();
 
-    QMap<QString,QColor>::iterator i = this->plottableData.begin();
-    while(i != this->plottableData.end())
-        ids.append(i.key());
+    foreach(PlottableData data, this->plottableData)
+        ids.append(data.Descriptor.ID);
 
     return ids;
 }
 
-void DataGraph::AddPlottable(QString ID, QColor color)
+void DataGraph::SetPlottableData(QList<DataGraph::PlottableData> plottable)
 {
-    this->plottableData.insert(ID, color);
+    this->plottableData.clear();
+    this->plottableData.append(plottable);
+}
+
+void DataGraph::AddPlottable(DataGraph::PlottableData plottable)
+{
+    this->plottableData.append(plottable);
 }
 
 void DataGraph::SetRange(QDateTime from, QDateTime to)

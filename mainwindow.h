@@ -23,7 +23,7 @@ public:
 
 protected slots:
     void onProjectCanceled();
-    void onProjectCreated(Project *project);
+    void onProjectCreated(Project *project, QList<DataGraph*> graphs);
     void onProjectOpenRequest(Project *project);
     void onProjectDeleteRequest(Project *project);
     void connectProjectSlots();
@@ -35,6 +35,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     NewProjectWizzard *newProjectCreator;
+    StartPage *startpage;
 };
 
 #endif // MAINWINDOW_H

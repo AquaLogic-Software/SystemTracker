@@ -7,8 +7,10 @@
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QVector>
+#include <QCloseEvent>
 
 #include "trackabledatachecklist.h"
+#include "plottabledatachecklist.h"
 #include "../project.h"
 #include "dategraph.h"
 
@@ -31,6 +33,8 @@ public:
     explicit NewProjectWizzard(Project *project, QWidget *parent = 0);
     ~NewProjectWizzard();
 
+    void closeEvent(QCloseEvent *event);
+
 private slots:
     void on_buttonBox_accepted();
     void on_locationButton_clicked();
@@ -51,7 +55,7 @@ private:
     Project *project;
     QVector<DataGraph*> graphs;
     TrackableDataChecklist *checkList;
-    TrackableDataChecklist *graphCheckList;
+    PlottableDataCheckList *graphCheckList;
     int graphIndex;
 };
 

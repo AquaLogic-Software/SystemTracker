@@ -20,6 +20,7 @@ class PlottableDataCheckList : public QTableWidget
     Q_OBJECT
 public:
     explicit PlottableDataCheckList(QObject *parent = 0);
+    ~PlottableDataCheckList();
 
     class TableItem : public QTableWidgetItem
     {
@@ -30,29 +31,24 @@ public:
         TableItem(QString id, int row, int col);
     };
 
-    QMap<QString,QColor> GetTrackableIDs();
+    QList<DataGraph::PlottableData> GetPlottable();
+    void SetPlottable(QList<DataGraph::PlottableData> plottable);
+    void SetTrackable(QList<QString> trackable);
 
 signals:
 
-public slots:
-    void SetTrackableIDs(QList<QString> ids);
-
 private slots:
     void mousePressEvent(QMouseEvent *event);
-    void onTrackableToggle(QString id);
-    void onAddNew(DataEntry::Descriptor descriptor);
-    void onEdit(DataEntry::Descriptor descriptor);
-    void onCancelEdit();
-    void onAddNewRequest();
-    void onEditRequest(QString id);
-    void onRemoveRequest(QString id);
+    void onEditRequest(QVariant data);
+    void onTrackableToggle(QVariant data);
     void ResetList();
 
 private:
 
     Menu *menu;
     QColorDialog *colorDialog;
-    QList<DataGraph::PlottableData> trackableData;
+    QList<DataGraph::PlottableData> plottableData;
+    QList<QString> trackableData;
     QString contextID;
 
 };

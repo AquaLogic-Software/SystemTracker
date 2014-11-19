@@ -13,9 +13,6 @@ ProjectView::ProjectView(Project *project, QWidget *parent) :
     ui->textTab->setLayout(ui->textViewLayout);
 
     this->OpenView();
-
-    foreach(DateGraph *graph, this->graphs)
-        ui->graphTabLayout->addWidget(graph);
 }
 
 ProjectView::~ProjectView()
@@ -25,7 +22,7 @@ ProjectView::~ProjectView()
 
 void ProjectView::ReplotGraphs()
 {
-    foreach(DateGraph *graph, this->graphs)
+    foreach(DataGraph *graph, this->graphs)
         graph->Replot();
 }
 
@@ -52,16 +49,15 @@ void ProjectView::SaveView()
         xml.writeAttribute("id", graph->GetID());
         xml.writeAttribute("name", graph->GetName());
 
-        QMap<QString,QColor> plottable = graph->GetlottableData();
-        QMap<QString,QColor>::iterator iterator = plottable.begin();
+        QList<DataGraph::PlottableData> plottableList = graph->GetPlottableData();
 
-        while(iterator != plottable.end())
+        foreach(DataGraph::PlottableData plottable, plottableList)
         {
             xml.writeEmptyElement("trackable");
-            xml.writeAttribute("id", iterator.key());
-            xml.writeAttribute("r", QString::number(iterator.value().red()));
-            xml.writeAttribute("g", QString::number(iterator.value().green()));
-            xml.writeAttribute("b", QString::number(iterator.value().blue()));
+            xml.writeAttribute("id", plottable.Descriptor.ID);
+            xml.writeAttribute("r", QString::number(plottable.Color.red()));
+            xml.writeAttribute("g", QString::number(plottable.Color.green()));
+            xml.writeAttribute("b", QString::number(plottable.Color.blue()));
         }
 
         xml.writeEmptyElement("layout");
@@ -71,12 +67,19 @@ void ProjectView::SaveView()
         xml.writeAttribute("y", QString::number(graph->Layout.Y));
         xml.writeAttribute("policies", QString::number(graph->Layout.Policies));
     }
+
+    xml.writeEndElement();
+    xml.writeEndDocument();
+
+    file.close();
 }
 
 void ProjectView::OpenView()
 {
     QDir dir(project->Location);
     QFile file(dir.absoluteFilePath(project->Name + QString(".apv")));
+
+    this->graphs.clear();
 
     if(file.exists())
     {
@@ -111,13 +114,16 @@ void ProjectView::OpenView()
 
                         this->graphs.at(graphIndex)->AddPlottable
                         (
-                            xml.attributes().value("id").toString(),
-                            QColor::fromRgb
-                            (
-                                xml.attributes().value("r").toInt(),
-                                xml.attributes().value("g").toInt(),
-                                xml.attributes().value("b").toInt()
-                            )
+                            DataGraph::PlottableData
+                            {
+                                ProjectManager::GetDescriptorByID(xml.attributes().value("id").toString()),
+                                QColor::fromRgb
+                                (
+                                    xml.attributes().value("r").toInt(),
+                                    xml.attributes().value("g").toInt(),
+                                    xml.attributes().value("b").toInt()
+                                )
+                            }
                         );
                     }
                     else if(xml.name() == "layout")
@@ -142,7 +148,30 @@ void ProjectView::OpenView()
             {
                 qWarning() << "XML ERROR:" << xml.lineNumber() << ": " << xml.errorString();
             }
+
+            file.close();
+
+            foreach(DataGraph *graph, this->graphs)
+            {
+                ui->graphTabLayout->addWidget(graph);
+                graph->Replot();
+            }
         }
+    }
+}
+
+void ProjectView::SetGraphs(QList<DataGraph *> graphs)
+{
+    foreach(DataGraph *graph, this->graphs)
+        ui->graphTabLayout->removeWidget(graph);
+
+    this->graphs.clear();
+    this->graphs.append(graphs);
+
+    foreach(DataGraph *graph, this->graphs)
+    {
+        ui->graphTabLayout->addWidget(graph);
+        graph->Replot();
     }
 }
 

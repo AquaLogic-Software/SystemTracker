@@ -48,6 +48,11 @@ DataEntryDialog::~DataEntryDialog()
     delete this->entryTable;
 }
 
+void DataEntryDialog::closeEvent(QCloseEvent *event)
+{
+    emit UserFinished(false);
+}
+
 void DataEntryDialog::on_buttonBox_accepted()
 {
     for(int i = 0, rows = this->entryTable->rowCount(); i < rows; i++)

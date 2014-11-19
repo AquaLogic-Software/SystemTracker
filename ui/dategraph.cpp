@@ -61,16 +61,15 @@ void DateGraph::Replot()
 
     this->graphCount = 0;
 
-    QMap<QString,QColor>::iterator i = this->plottableData.begin();
-    while(i != this->plottableData.end())
+    foreach (PlottableData plottable, this->plottableData)
     {
         this->graph->addGraph();
 
         QPen pen;
-        pen.setColor(i.value());
+        pen.setColor(plottable.Color);
         this->graph->graph(this->graphCount)->setLineStyle(QCPGraph::lsLine);
         this->graph->graph(this->graphCount)->setPen(pen);
-        this->graph->graph(this->graphCount)->setBrush(QBrush(i.value()));
+        this->graph->graph(this->graphCount)->setBrush(QBrush(plottable.Color));
 
         QVector<double> time, data;
         time.clear();
@@ -79,7 +78,7 @@ void DateGraph::Replot()
         //Very slow..needs replacement for beta..rushing a release
         foreach (Project::EntryList list, project->DataLists)
         {
-            if(list.Descriptor.ID == i.key())
+            if(list.Descriptor.ID == plottable.Descriptor.ID)
             {
                 this->graph->graph(this->graphCount)->setName(list.Descriptor.Name);
 

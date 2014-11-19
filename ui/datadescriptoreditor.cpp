@@ -56,6 +56,11 @@ DataDescriptorEditor::~DataDescriptorEditor()
     delete ui;
 }
 
+void DataDescriptorEditor::closeEvent(QCloseEvent event)
+{
+    emit Canceled();
+}
+
 void DataDescriptorEditor::on_buttonBox_clicked(QAbstractButton *button)
 {
     QDialogButtonBox::StandardButton btn = this->ui->buttonBox->standardButton(button);

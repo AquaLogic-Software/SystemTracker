@@ -10,6 +10,8 @@
 #include <QMenu>
 #include <QDoubleSpinBox>
 #include <QLineEdit>
+#include <QCloseEvent>
+
 #include "../dataentry.h"
 #include "../project.h"
 
@@ -33,6 +35,8 @@ class DataEntryDialog : public QDialog
 public:
     explicit DataEntryDialog(Project *project, QWidget *parent = 0);
     ~DataEntryDialog();
+
+    virtual void closeEvent(QCloseEvent *event);
 
 signals:
     void UserFinished(bool);

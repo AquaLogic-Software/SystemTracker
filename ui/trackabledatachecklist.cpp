@@ -4,11 +4,7 @@ TrackableDataChecklist::TrackableDataChecklist(QObject *parent) :
     QTableWidget(parent)
 {
     menu = new Menu(this);
-    menu->hide();
-    this->connect(this->menu, SIGNAL(AddNew()), SLOT(onAddNewRequest()));
-    this->connect(this->menu, SIGNAL(Edit(QString)), SLOT(onEditRequest(QString)));
-    this->connect(this->menu, SIGNAL(TrackableToggle(QString)), SLOT(onTrackableToggle(QString)));
-    this->connect(this->menu, SIGNAL(Remove(QString)), SLOT(onRemoveRequest(QString)));
+
     this->editor = NULL;
     this->project = NULL;
     this->ResetList();
@@ -35,26 +31,53 @@ void TrackableDataChecklist::mousePressEvent(QMouseEvent *event)
         if(item == NULL)
             return;
 
-        menu->SetContextID(item->ContextID);
-        menu->SetTrackable(this->trackableData.contains(item->ContextID));
-        menu->popup(event->globalPos());
+        menu->ClearItems();
+
+        MenuItem *newItem = new MenuItem("Add New", item->ContextID);
+        this->connect(newItem, SIGNAL(Invoked(QVariant)), SLOT(onAddNewRequest(QVariant)));
+
+        MenuItem *editItem = new MenuItem(tr("Edit"), item->ContextID);
+        this->connect(editItem, SIGNAL(Invoked(QVariant)), SLOT(onEditRequest(QVariant)));
+
+        MenuItem *removeItem = new MenuItem("Remove", item->ContextID);
+        this->connect(newItem, SIGNAL(Invoked(QVariant)), SLOT(onRemoveRequest(QVariant)));
+
+        MenuItem *trackableItem;
+
+        if(this->trackableData.contains(item->ContextID))
+            trackableItem = new MenuItem("Don't Track Data", item->ContextID);
+        else
+            trackableItem = new MenuItem("Track Data", item->ContextID);
+
+        this->connect(trackableItem, SIGNAL(Invoked(QVariant)), SLOT(onTrackableToggle(QVariant)));
+
+        menu->AddItem(newItem);
+        menu->AddItem(editItem);
+        menu->AddItem(removeItem);
+        menu->AddSeparator();
+        menu->AddItem(trackableItem);
+
+        menu->Popup(event->globalPos());
+
     }
     else
         QTableWidget::mousePressEvent(event);
 }
 
-void TrackableDataChecklist::onTrackableToggle(QString id)
+void TrackableDataChecklist::onTrackableToggle(QVariant data)
 {
-    if(this->trackableData.contains(id))
-        this->trackableData.removeAll(id);
+    if(this->trackableData.contains(data.toString()))
+        this->trackableData.removeAll(data.toString());
     else
-        this->trackableData.append(id);
+        this->trackableData.append(data.toString());
 
     this->ResetList();
 }
 
-void TrackableDataChecklist::onAddNewRequest()
+void TrackableDataChecklist::onAddNewRequest(QVariant data)
 {
+    Q_UNUSED(data);
+
     if(this->editor != NULL)
         return;
 
@@ -65,15 +88,16 @@ void TrackableDataChecklist::onAddNewRequest()
     this->editor->show();
 }
 
-void TrackableDataChecklist::onEditRequest(QString id)
+void TrackableDataChecklist::onEditRequest(QVariant data)
 {
     if(this->editor != NULL)
         return;
+
     QList<DataEntry::Descriptor> list = ProjectManager::GetDescriptors();
 
     foreach(DataEntry::Descriptor descriptor, list)
     {
-        if(descriptor.ID == id)
+        if(descriptor.ID == data.toString())
         {
             this->editor = new DataDescriptorEditor(descriptor);
             this->connect(this->editor, SIGNAL(Canceled()), SLOT(onCancelEdit()));
@@ -84,7 +108,7 @@ void TrackableDataChecklist::onEditRequest(QString id)
     }
 }
 
-void TrackableDataChecklist::onRemoveRequest(QString id)
+void TrackableDataChecklist::onRemoveRequest(QVariant data)
 {
 
 }
@@ -162,43 +186,6 @@ void TrackableDataChecklist::ResetList()
 
     this->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     this->setHorizontalHeaderLabels(QStringList{ QString("Name"), QString("Type"), QString("Tracking") });
-}
-
-Menu::Menu(QObject *parent) : QMenu(parent)
-{
-    contextID.clear();
-
-    this->editAction = new QAction("Edit", this);
-    this->editAction->setCheckable(false);
-    this->connect(this->editAction, SIGNAL(triggered(bool)), SLOT(onEditActionTriggered(bool)));
-
-    this->addNewAction = new QAction("Add New", this);
-    this->addNewAction->setCheckable(false);
-    this->connect(this->addNewAction, SIGNAL(triggered(bool)), SLOT(onAddNewActionTriggered(bool)));
-
-    this->removeAction = new QAction("Remove", this);
-    this->removeAction->setCheckable(false);
-    this->connect(this->removeAction, SIGNAL(triggered(bool)), SLOT(onRemoveActionTriggered(bool)));
-
-    this->trackableAction = new QAction("Trackable", this);
-    this->trackableAction->setCheckable(true);
-    this->trackableAction->setChecked(false);
-    this->connect(this->trackableAction, SIGNAL(triggered(bool)), SLOT(onTrackableActionTriggered(bool)));
-
-    this->addAction(this->editAction);
-    this->addAction(this->addNewAction);
-    this->addAction(this->trackableAction);
-    this->addAction(this->removeAction);
-}
-
-void Menu::SetContextID(QString id)
-{
-    contextID = id;
-}
-
-void Menu::SetTrackable(bool trackable)
-{
-    this->trackableAction->setChecked(trackable);
 }
 
 QList<QString> TrackableDataChecklist::GetTrackableIDs()

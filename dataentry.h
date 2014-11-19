@@ -90,6 +90,22 @@ public:
 
             return text;
         }
+
+        inline bool operator==(const Descriptor &b)
+        {
+            if(this->ID == b.ID)
+                return true;
+
+            return false;
+        }
+
+        inline bool operator==(const QString &b)
+        {
+            if(this->ID == b)
+                return true;
+
+            return false;
+        }
     };
 
     QDateTime Timestamp;

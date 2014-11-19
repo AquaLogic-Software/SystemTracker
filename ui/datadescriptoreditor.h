@@ -3,6 +3,8 @@
 
 #include <QDialog>
 #include <QAbstractButton>
+#include <QCloseEvent>
+
 #include "../dataentry.h"
 
 namespace Ui {
@@ -17,6 +19,8 @@ public:
     DataDescriptorEditor(QWidget *parent = 0);
     DataDescriptorEditor(DataEntry::Descriptor descriptor, QWidget *parent = 0);
     ~DataDescriptorEditor();
+
+    void closeEvent(QCloseEvent event);
 
 signals:
     void NewDescriptor(DataEntry::Descriptor);

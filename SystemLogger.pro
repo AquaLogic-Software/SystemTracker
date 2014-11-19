@@ -26,7 +26,6 @@ SOURCES += main.cpp\
     3rd_party/qcustomplot/qcustomplot.cpp \
     ui/entrydialog.cpp \
     ui/dategraph.cpp \
-    ui/trackabledataeditordialog.cpp \
     ui/trackabledatachecklist.cpp \
     ui/datadescriptoreditor.cpp \
     ui/datagraph.cpp \
@@ -49,7 +48,6 @@ HEADERS  += mainwindow.h \
     abstractentry.h \
     dataentry.h \
     ui/dategraph.h \
-    ui/trackabledataeditordialog.h \
     ui/trackabledatachecklist.h \
     ui/datadescriptoreditor.h \
     ui/layoutdata.h \
@@ -66,7 +64,6 @@ FORMS    += mainwindow.ui \
     ui/newprojectwizzard.ui \
     ui/entrydialog.ui \
     ui/dategraph.ui \
-    ui/trackabledataeditordialog.ui \
     ui/datadescriptoreditor.ui \
     ui/dataentrydialog.ui
 

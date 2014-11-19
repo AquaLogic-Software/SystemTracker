@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->centralWidget->setLayout(ui->mainLayout);
     ProjectManager::Init();
 
-    StartPage *startpage = new StartPage();
+    startpage = new StartPage();
     this->connect(startpage, SIGNAL(ProjectOpenRequest(Project*)), SLOT(onProjectOpenRequest(Project*)));
     this->connect(startpage,SIGNAL(ProjectDeleteRequest(Project*)),SLOT(onProjectDeleteRequest(Project*)));
     ui->projectView->addTab(startpage, "Start Page");
@@ -27,14 +27,27 @@ void MainWindow::onProjectCanceled()
     delete this->newProjectCreator;
 }
 
-void MainWindow::onProjectCreated(Project *project)
+void MainWindow::onProjectCreated(Project *project, QList<DataGraph *> graphs)
 {
     disconnectProjectSlots();
     this->newProjectCreator->hide();
     delete this->newProjectCreator;
 
     ProjectView *view = new ProjectView(project);
+    view->SetGraphs(graphs);
+    view->SaveView();
+    view->OpenView();
+
     ui->projectView->insertTab(ui->projectView->count(), view, project->Name);
+
+    if(this->startpage != NULL)
+    {
+        ui->projectView->removeTab(0);
+        delete this->startpage;
+        this->startpage = NULL;
+    }
+
+    ui->projectView->setCurrentIndex(ui->projectView->count() - 1);
 }
 
 void MainWindow::onProjectOpenRequest(Project *project)
@@ -52,7 +65,7 @@ void MainWindow::onProjectDeleteRequest(Project *project)
 void MainWindow::connectProjectSlots()
 {
     this->connect(this->newProjectCreator, SIGNAL(ProjectCanceled()), SLOT(onProjectCanceled()));
-    this->connect(this->newProjectCreator, SIGNAL(ProjectCreated(Project*)), SLOT(onProjectCreated(Project*)));
+    this->connect(this->newProjectCreator, SIGNAL(ProjectCreated(Project*,QList<DataGraph*>)), SLOT(onProjectCreated(Project*,QList<DataGraph*>)));
 }
 
 void MainWindow::disconnectProjectSlots()

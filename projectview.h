@@ -52,6 +52,7 @@ public:
     void ReplotGraphs();
     void SaveView();
     void OpenView();
+    void SetGraphs(QList<DataGraph*> graphs);
 
 private slots:
 

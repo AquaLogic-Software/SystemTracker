@@ -91,6 +91,8 @@ public:
     QList<DataEntry> LastEntry;
 
     Project();
+
+    QList<QString> GetTrackableIDs();
 };
 
 class ProjectManager
@@ -105,6 +107,7 @@ public:
     static QList<Project*> RecentProjects;
 
     static QList<DataEntry::Descriptor> GetDescriptors();
+    static DataEntry::Descriptor GetDescriptorByID(QString id);
     static void AddDescriptor(DataEntry::Descriptor descriptor);
     static void UpdateDescriptor(DataEntry::Descriptor descriptor);
     static void RemoveDescriptor(DataEntry::Descriptor descriptor);

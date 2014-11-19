@@ -3,20 +3,7 @@
 PlottableDataCheckList::PlottableDataCheckList(QObject *parent) :
     QTableWidget(parent)
 {
-    menu = new Menu(this);
-    menu->hide();
-    this->connect(this->menu, SIGNAL(AddNew()), SLOT(onAddNewRequest()));
-    this->connect(this->menu, SIGNAL(Edit(QString)), SLOT(onEditRequest(QString)));
-    this->connect(this->menu, SIGNAL(TrackableToggle(QString)), SLOT(onTrackableToggle(QString)));
-    this->connect(this->menu, SIGNAL(Remove(QString)), SLOT(onRemoveRequest(QString)));
-    this->editor = NULL;
-    this->project = NULL;
-    this->ResetList();
-}
-
-PlottableDataCheckList::PlottableDataCheckList(Project *project, QObject *parent)
-{
-    this->project = project;
+    this->menu = new Menu();
 }
 
 PlottableDataCheckList::~PlottableDataCheckList()
@@ -25,141 +12,143 @@ PlottableDataCheckList::~PlottableDataCheckList()
     delete this->menu;
 }
 
+QList<DataGraph::PlottableData> PlottableDataCheckList::GetPlottable()
+{
+    return this->plottableData;
+}
+
+void PlottableDataCheckList::SetPlottable(QList<DataGraph::PlottableData> plottable)
+{
+    this->plottableData.clear();
+    this->plottableData.append(plottable);
+    this->ResetList();
+}
+
+void PlottableDataCheckList::SetTrackable(QList<QString> trackable)
+{
+    this->trackableData.clear();
+    this->trackableData.append(trackable);
+}
+
 void PlottableDataCheckList::mousePressEvent(QMouseEvent *event)
 {
     if(event->button() == Qt::RightButton)
     {
         event->accept();
         TableItem *item = reinterpret_cast<TableItem*>(this->itemAt(event->pos()));
+        this->menu->ClearItems();
 
-        if(item == NULL)
-            return;
+        MenuItem *trackableItem = NULL;
 
-        menu->SetContextID(item->ContextID);
-        menu->SetTrackable(this->trackableData.contains(item->ContextID));
-        menu->popup(event->globalPos());
+        foreach(DataGraph::PlottableData plottable, this->plottableData)
+        {
+            if(plottable.Descriptor == item->ContextID)
+            {
+                MenuItem *editItem = new MenuItem(tr("Edit"), item->ContextID);
+                this->connect(editItem, SIGNAL(Invoked(QVariant)), SLOT(onEditRequest(QVariant)));
+                this->menu->AddItem(editItem);
+
+                trackableItem = new MenuItem(tr("Untrack"), item->ContextID);
+                break;
+            }
+        }
+
+        if(trackableItem == NULL)
+            trackableItem = new MenuItem(tr("Track"), item->ContextID);
+
+        this->connect(trackableItem, SIGNAL(Invoked(QVariant)), SLOT(onTrackableToggle(QVariant)));
+        this->menu->AddItem(trackableItem);
+        this->menu->Popup(event->globalPos());
     }
     else
         QTableWidget::mousePressEvent(event);
 }
 
-void PlottableDataCheckList::onTrackableToggle(QString id)
+void PlottableDataCheckList::onTrackableToggle(QVariant data)
 {
-    foreach(DataGraph::PlottableData plottable, this->trackableData)
+    foreach(DataGraph::PlottableData plottable, this->plottableData)
     {
-        if(plottable.Descriptor.ID == id)
+        if(plottable.Descriptor.ID == data.toString())
         {
-            this->trackableData.removeOne(plottable);
+            this->plottableData.removeOne(plottable);
+            this->ResetList();
+            return;
         }
     }
+
+    this->plottableData.append
+    (
+        DataGraph::PlottableData
+        {
+            ProjectManager::GetDescriptorByID(data.toString()),
+            QColorDialog::getColor(QColor(0,0,0), 0, tr("Choose a new color"))
+        }
+    );
 
     this->ResetList();
 }
 
-void PlottableDataCheckList::onAddNewRequest()
+void PlottableDataCheckList::onEditRequest(QVariant data)
 {
-    if(this->editor != NULL)
-        return;
-
-    this->colorDialog = new QColorDialog()
-    this->connect(this->editor, SIGNAL(Canceled()), SLOT(onCancelEdit()));
-    this->connect(this->editor, SIGNAL(EditedDescriptor(DataEntry::Descriptor)), SLOT(onEdit(DataEntry::Descriptor)));
-    this->connect(this->editor, SIGNAL(NewDescriptor(DataEntry::Descriptor)), SLOT(onAddNew(DataEntry::Descriptor)));
-    this->editor->show();
-}
-
-void PlottableDataCheckList::onEditRequest(QString id)
-{
-    if(this->editor != NULL)
-        return;
-    QList<DataEntry::Descriptor> list = ProjectManager::GetDescriptors();
-
-    foreach(DataEntry::Descriptor descriptor, list)
+    foreach(DataGraph::PlottableData plottable, this->plottableData)
     {
-        if(descriptor.ID == id)
+        if(plottable.Descriptor.ID == data.toString())
         {
-            this->editor = new DataDescriptorEditor(descriptor);
-            this->connect(this->editor, SIGNAL(Canceled()), SLOT(onCancelEdit()));
-            this->connect(this->editor, SIGNAL(EditedDescriptor(DataEntry::Descriptor)), SLOT(onEdit(DataEntry::Descriptor)));
-            this->connect(this->editor, SIGNAL(NewDescriptor(DataEntry::Descriptor)), SLOT(onAddNew(DataEntry::Descriptor)));
-            this->editor->show();
+            this->plottableData.removeOne(plottable);
+            plottable.Color = QColorDialog::getColor(plottable.Color, 0, tr("Choose a new color"));
+            this->plottableData.append(plottable);
+            this->ResetList();
         }
     }
-}
-
-void PlottableDataCheckList::onRemoveRequest(QString id)
-{
-
-}
-
-void PlottableDataCheckList::onAddNew(DataEntry::Descriptor descriptor)
-{
-    ProjectManager::AddDescriptor(descriptor);
-    this->disconnect(this->colorDialog, SIGNAL(Canceled()));
-    this->disconnect(this->colorDialog, SIGNAL(EditedDescriptor(DataEntry::Descriptor)));
-    this->disconnect(this->colorDialog, SIGNAL(NewDescriptor(DataEntry::Descriptor)));
-    this->colorDialog->hide();
-
-    delete this->colorDialog;
-    this->colorDialog = NULL;
-}
-
-void PlottableDataCheckList::onEdit(DataEntry::Descriptor descriptor)
-{
-    this->disconnect(this->colorDialog, SIGNAL(rejected()));
-    this->disconnect(this->colorDialog, SIGNAL(accepted()));
-    this->colorDialog->hide();
-
-    delete this->colorDialog;
-    this->colorDialog = NULL;
-}
-
-void PlottableDataCheckList::onCancelEdit()
-{
-    this->disconnect(this->colorDialog, SIGNAL(rejected()));
-    this->disconnect(this->colorDialog, SIGNAL(accepted()));
-    this->colorDialog->hide();
-
-    delete this->colorDialog;
-    this->colorDialog = NULL;
 }
 
 void PlottableDataCheckList::ResetList()
 {
     this->clear();
 
-    QList<DataEntry::Descriptor> list;
-
-    if(this->project == NULL)
-        list = ProjectManager::GetDescriptors();
-    else
-        list = this->project->TrackableDescriptors;
+    QList<DataEntry::Descriptor> list = ProjectManager::GetDescriptors();
 
     this->setRowCount(list.count());
-    this->setColumnCount(3);
+    this->setColumnCount(4);
 
     int row = 0;
 
     foreach(DataEntry::Descriptor descriptor, list)
     {
+        if(!this->trackableData.contains(descriptor.ID))
+            continue;
+
         TableItem *itemName = new TableItem(descriptor.ID, row, 0);
         itemName->setText(descriptor.Name);
         TableItem *itemType = new TableItem(descriptor.ID, row, 1);
         itemType->setText(DataEntry::Descriptor::GetTypeText(descriptor));
-        TableItem *itemTrackable = new TableItem(descriptor.ID, row, 2);
+        TableItem *itemColor = new TableItem(descriptor.ID, row, 2);
+        TableItem *itemTrackable = new TableItem(descriptor.ID, row, 3);
+        itemTrackable->setText("No");
 
-        if(trackableData.contains(descriptor.ID))
-            itemTrackable->setText(QString("Yes"));
-        else
-            itemTrackable->setText(QString("No"));
+        foreach(DataGraph::PlottableData plottable, this->plottableData)
+        {
+            if(plottable.Descriptor.ID == descriptor.ID)
+            {
+                itemTrackable->setText("Yes");
+                itemColor->setBackgroundColor(plottable.Color);
+            }
+        }
 
         this->setItem(row, 0, itemName);
         this->setItem(row, 1, itemType);
-        this->setItem(row, 2, itemTrackable);
+        this->setItem(row, 2, itemColor);
+        this->setItem(row, 3, itemTrackable);
 
         row++;
     }
 
     this->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    this->setHorizontalHeaderLabels(QStringList{ QString("Name"), QString("Type"), QString("Tracking") });
+    this->setHorizontalHeaderLabels(QStringList{ tr("Name"), tr("Type"), tr("Color"), tr("Tracking") });
+}
+
+PlottableDataCheckList::TableItem::TableItem(QString id, int row, int col) : QTableWidgetItem()
+{
+    this->ContextID = id;
+    this->Location = QPair<int,int>(row,col);
 }

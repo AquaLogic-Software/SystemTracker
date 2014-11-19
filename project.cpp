@@ -7,6 +7,17 @@ Project::Project()
 {
 }
 
+QList<QString> Project::GetTrackableIDs()
+{
+    QList<QString> ids;
+    ids.clear();
+
+    foreach(DataEntry::Descriptor descriptor, this->TrackableDescriptors)
+        ids.append(descriptor.ID);
+
+    return ids;
+}
+
 void ProjectManager::OpenProject(Project *project)
 {
     QDir dir(project->Location);
@@ -27,7 +38,7 @@ void ProjectManager::OpenProject(Project *project)
                     if(xml.name() == "project")
                     {
                         project->Name = xml.attributes().value("name").toString();
-                        project->Name = xml.attributes().value("id").toString();
+                        project->ID = xml.attributes().value("id").toString();
                     }
                     else if(xml.name() == "datalist")
                     {
@@ -53,12 +64,7 @@ void ProjectManager::OpenProject(Project *project)
                         project->DataLists.at(i).Add(entry);
                     }
                     else if(xml.name() == "location")
-                    {
-                        if(project == NULL)
-                            continue;
-
-                        project->Location = xml.text().toString();
-                    }
+                        project->Location = xml.readElementText();
                 }
             }
             if (xml.error())
@@ -224,8 +230,8 @@ void ProjectManager::Init()
                     {
                         if(RecentProjects.count() == 0)
                             continue;
-
-                        RecentProjects.at(RecentProjects.count() - 1)->Location = xml.text().toString();
+                        QString location = xml.readElementText();
+                        RecentProjects.at(RecentProjects.count() - 1)->Location = location;
                     }
                 }
             }
@@ -431,6 +437,15 @@ QString ProjectManager::GenerateUUID()
 QList<DataEntry::Descriptor> ProjectManager::GetDescriptors()
 {
     return defaultDescriptors;
+}
+
+DataEntry::Descriptor ProjectManager::GetDescriptorByID(QString id)
+{
+    foreach(DataEntry::Descriptor descriptor, defaultDescriptors)
+    {
+        if(descriptor.ID == id)
+            return descriptor;
+    }
 }
 
 void ProjectManager::AddDescriptor(DataEntry::Descriptor descriptor)

@@ -8,6 +8,7 @@ NewProjectWizzard::NewProjectWizzard(Project *project, QWidget *parent) :
     ui->setupUi(this);
     this->setLayout(ui->mainLayout);
     this->project = project;
+    this->graphs.clear();
     this->checkList = new TrackableDataChecklist(this);
     this->ui->trackableDataLayout->insertWidget(0, this->checkList);
     this->ui->graphSetupWidget->setVisible(false);
@@ -22,6 +23,11 @@ NewProjectWizzard::NewProjectWizzard(Project *project, QWidget *parent) :
 NewProjectWizzard::~NewProjectWizzard()
 {
     delete ui;
+}
+
+void NewProjectWizzard::closeEvent(QCloseEvent *event)
+{
+    emit ProjectCanceled();
 }
 
 void NewProjectWizzard::on_buttonBox_accepted()
@@ -71,15 +77,7 @@ void NewProjectWizzard::on_buttonBox_accepted()
             }
         }
 
-        this->project->Location = ui->locationEdit->text();
-        QDir dir(this->project->Location);
-
-        if(!dir.mkpath(this->project->Location + this->project->Name + QDir::separator() + QString("images")))
-        {
-            QMessageBox::warning(this, tr("New Project"),tr("Could not create directory"),QMessageBox::Ok);
-            return;
-        }
-
+        this->project->Location = ui->locationEdit->text() + QDir::separator() + this->project->Name;
         this->Advance();
     }
     else if(this->state == Graphs)
@@ -114,7 +112,8 @@ void NewProjectWizzard::Advance()
     case Details:
         this->state = Graphs;
 
-        this->graphCheckList = new TrackableDataChecklist(this->project, this);
+        this->graphCheckList = new PlottableDataCheckList(this);
+        this->graphCheckList->SetTrackable(this->project->GetTrackableIDs());
         this->ui->graphCheckListLayout->insertWidget(0,this->graphCheckList);
 
         this->ui->mainLayout->removeWidget(this->ui->projectSetupWidget);
@@ -126,6 +125,14 @@ void NewProjectWizzard::Advance()
         break;
 
     case Graphs:
+        QDir dir(this->project->Location);
+
+        if(!dir.mkpath(this->project->Location + QDir::separator() + QString("images")))
+        {
+            QMessageBox::warning(this, tr("New Project"),tr("Could not create directory"),QMessageBox::Ok);
+            return;
+        }
+
         ProjectManager::SaveProject(this->project);
         emit ProjectCreated(this->project, this->graphs.toList());
         break;
@@ -153,7 +160,9 @@ void NewProjectWizzard::on_addGraphButton_clicked()
 
 void NewProjectWizzard::on_graphSelectorCombo_currentIndexChanged(int index)
 {
-    if(graphIndex != -1)
+    if(this->graphIndex != -1)
+        this->graphs.at(graphIndex)->SetPlottableData(this->graphCheckList->GetPlottable());
 
-    this->graphCheckList->SetTrackableIDs(this->graphs.at(index)->GetPlottableIDs());
+    this->graphCheckList->SetPlottable(this->graphs.at(index)->GetPlottableData());
+    this->graphIndex = index;
 }

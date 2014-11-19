@@ -10,6 +10,7 @@
 #include "../dataentry.h"
 #include "../project.h"
 #include "datagraph.h"
+#include "menu.h"
 
 #include "datadescriptoreditor.h"
 
@@ -42,13 +43,13 @@ public slots:
 
 private slots:
     void mousePressEvent(QMouseEvent *event);
-    void onTrackableToggle(QString id);
     void onAddNew(DataEntry::Descriptor descriptor);
     void onEdit(DataEntry::Descriptor descriptor);
     void onCancelEdit();
-    void onAddNewRequest();
-    void onEditRequest(QString id);
-    void onRemoveRequest(QString id);
+    void onAddNewRequest(QVariant data);
+    void onEditRequest(QVariant data);
+    void onRemoveRequest(QVariant data);
+    void onTrackableToggle(QVariant data);
     void ResetList();
 
 private:
