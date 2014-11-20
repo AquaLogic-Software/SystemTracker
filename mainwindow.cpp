@@ -20,6 +20,14 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    ProjectManager::SaveProjectList();
+
+    for(int i = 0; i < ui->projectView->count(); i++)
+        ui->projectView->widget(i)->close();
+}
+
 void MainWindow::onProjectCanceled()
 {
     disconnectProjectSlots();
@@ -34,9 +42,9 @@ void MainWindow::onProjectCreated(Project *project, QList<DataGraph *> graphs)
     delete this->newProjectCreator;
 
     ProjectView *view = new ProjectView(project);
-    view->SetGraphs(graphs);
     view->SaveView();
     view->OpenView();
+    view->SetGraphs(graphs);
 
     ui->projectView->insertTab(ui->projectView->count(), view, project->Name);
 
@@ -56,6 +64,15 @@ void MainWindow::onProjectOpenRequest(Project *project)
 
     ProjectView *view = new ProjectView(project);
     ui->projectView->insertTab(ui->projectView->count(), view, project->Name);
+
+    if(this->startpage != NULL)
+    {
+        ui->projectView->removeTab(0);
+        delete this->startpage;
+        this->startpage = NULL;
+    }
+
+    ui->projectView->setCurrentIndex(ui->projectView->count() - 1);
 }
 
 void MainWindow::onProjectDeleteRequest(Project *project)

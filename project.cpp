@@ -5,6 +5,7 @@ QList<DataEntry::Descriptor> ProjectManager::defaultDescriptors;
 
 Project::Project()
 {
+    this->DataLists.clear();
 }
 
 QList<QString> Project::GetTrackableIDs()
@@ -52,13 +53,16 @@ void ProjectManager::OpenProject(Project *project)
                                 xml.attributes().value("id").toString()
                             )
                         );
+
+                        int i = project->DataLists.count();
+                        project->TrackableDescriptors.append(ProjectManager::GetDescriptorByID(xml.attributes().value("id").toString()));
                     }
                     else if(xml.name() == "entry")
                     {
                         DataEntry entry;
-                        int i = project->DataLists.count();
+                        int i = project->DataLists.count() - 1;
                         entry.Timestamp = QDateTime::fromString(xml.attributes().value("timestamp").toString(), Qt::TextDate);
-                        entry.SetValue(xml.text().toString());
+                        entry.SetValue(xml.attributes().value("value").toString());
                         entry.ListDescriptor = &project->DataLists.at(i).Descriptor;
 
                         project->DataLists.at(i).Add(entry);
@@ -113,8 +117,9 @@ void ProjectManager::SaveProject(Project *project)
 
         foreach(DataEntry entry, list.DataList)
         {
-            xml.writeTextElement(QString("entry"), entry.GetString());
+            xml.writeEmptyElement(QString("entry"));
             xml.writeAttribute(QString("timestamp"), entry.Timestamp.toString(Qt::TextDate));
+            xml.writeAttribute(QString("value"), entry.GetString());
         }
 
         xml.writeEndElement();
@@ -151,6 +156,7 @@ void ProjectManager::SaveProjectList()
         xml.writeEmptyElement("descriptor");
         xml.writeAttribute("name", descriptor.Name);
         xml.writeAttribute("id", descriptor.ID);
+        xml.writeAttribute("type", QString::number(descriptor.Type));
         xml.writeAttribute("flags", descriptor.Flags);
     }
 

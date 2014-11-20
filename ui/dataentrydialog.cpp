@@ -60,28 +60,50 @@ void DataEntryDialog::on_buttonBox_accepted()
         const TableItem *itemName = (TableItem*)this->entryTable->item(i, 0);
 
         //Again slow..needs to be replaced
-        foreach(Project::EntryList list, this->project->DataLists)
+        for(int i = 0; i < this->project->DataLists.count(); i++)
         {
-            if(list.Descriptor.ID == itemName->ContextID)
+            if(this->project->DataLists.at(i).Descriptor.ID == itemName->ContextID)
             {
                 DataEntry entry;
-                entry.ListDescriptor = &list.Descriptor;
+                entry.ListDescriptor = &this->project->DataLists.at(i).Descriptor;
 
-                if(list.Descriptor.IsNumerical())
+                if(this->project->DataLists.at(i).Descriptor.IsNumerical())
                 {
-                    QDoubleSpinBox *box = (QDoubleSpinBox*)this->entryTable->item(i, 1);
+                    QDoubleSpinBox *box = reinterpret_cast<QDoubleSpinBox*>(this->entryTable->cellWidget(i, 1));
                     entry.SetValue(box->value());
                 }
                 else
                 {
-                    QLineEdit *edit = (QLineEdit*)this->entryTable->item(i, 1);
+                    QLineEdit *edit = reinterpret_cast<QLineEdit*>(this->entryTable->cellWidget(i, 1));
                     entry.SetValue(edit->text());
                 }
 
-                list.Add(entry);
+                this->project->DataLists.at(i).Add(entry);
                 break;
             }
         }
+//        foreach(Project::EntryList list, this->project->DataLists)
+//        {
+//            if(list.Descriptor.ID == itemName->ContextID)
+//            {
+//                DataEntry entry;
+//                entry.ListDescriptor = &list.Descriptor;
+
+//                if(list.Descriptor.IsNumerical())
+//                {
+//                    QDoubleSpinBox *box = reinterpret_cast<QDoubleSpinBox*>(this->entryTable->cellWidget(i, 1));
+//                    entry.SetValue(box->value());
+//                }
+//                else
+//                {
+//                    QLineEdit *edit = reinterpret_cast<QLineEdit*>(this->entryTable->cellWidget(i, 1));
+//                    entry.SetValue(edit->text());
+//                }
+
+//                list.Add(entry);
+//                break;
+//            }
+//        }
     }
 
     emit UserFinished(true);

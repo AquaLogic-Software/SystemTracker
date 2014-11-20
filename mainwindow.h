@@ -21,6 +21,8 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    virtual void closeEvent(QCloseEvent *event);
+
 protected slots:
     void onProjectCanceled();
     void onProjectCreated(Project *project, QList<DataGraph*> graphs);

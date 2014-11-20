@@ -125,6 +125,10 @@ void NewProjectWizzard::Advance()
         break;
 
     case Graphs:
+
+        if(this->graphIndex != -1)
+            this->graphs.at(graphIndex)->SetPlottableData(this->graphCheckList->GetPlottable());
+
         QDir dir(this->project->Location);
 
         if(!dir.mkpath(this->project->Location + QDir::separator() + QString("images")))

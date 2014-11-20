@@ -108,7 +108,7 @@ void PlottableDataCheckList::ResetList()
 
     QList<DataEntry::Descriptor> list = ProjectManager::GetDescriptors();
 
-    this->setRowCount(list.count());
+    this->setRowCount(this->trackableData.count());
     this->setColumnCount(4);
 
     int row = 0;

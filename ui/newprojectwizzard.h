@@ -33,7 +33,7 @@ public:
     explicit NewProjectWizzard(Project *project, QWidget *parent = 0);
     ~NewProjectWizzard();
 
-    void closeEvent(QCloseEvent *event);
+    virtual void closeEvent(QCloseEvent *event);
 
 private slots:
     void on_buttonBox_accepted();

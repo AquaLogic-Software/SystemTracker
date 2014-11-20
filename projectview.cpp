@@ -66,6 +66,7 @@ void ProjectView::SaveView()
         xml.writeAttribute("x", QString::number(graph->Layout.X));
         xml.writeAttribute("y", QString::number(graph->Layout.Y));
         xml.writeAttribute("policies", QString::number(graph->Layout.Policies));
+        xml.writeEndElement();
     }
 
     xml.writeEndElement();
@@ -173,6 +174,12 @@ void ProjectView::SetGraphs(QList<DataGraph *> graphs)
         ui->graphTabLayout->addWidget(graph);
         graph->Replot();
     }
+}
+
+void ProjectView::closeEvent(QCloseEvent *event)
+{
+    ProjectManager::SaveProject(this->project);
+    this->SaveView();
 }
 
 void ProjectView::on_applyRangeButton_clicked()

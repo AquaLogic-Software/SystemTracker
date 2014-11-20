@@ -29,16 +29,18 @@ DateGraph::DateGraph(QString name, Project *project, QString id, QWidget *parent
     this->graph->addGraph();
     this->graph->xAxis->setTickLabels(true);
     this->graph->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-    this->graph->xAxis->setDateTimeFormat("MMMM\nyyyy");
+    this->graph->xAxis->setDateTimeFormat("MM/dd/yy");
     this->graph->xAxis->setLabel(name);
     this->graph->xAxis->setTickLabelFont(QFont(QFont().family(), 8));
     this->graph->yAxis->setTickLabelFont(QFont(QFont().family(), 8));
-    this->graph->xAxis->setAutoTickStep(false);
+    this->graph->xAxis->setAutoTickStep(true);
     this->graph->xAxis->setTickStep(604800); // one week in seconds
-    this->graph->xAxis->setSubTickCount(3);
+    this->graph->xAxis->setSubTickCount(4);
+    this->graph->xAxis2->setVisible(true);
+    this->graph->yAxis2->setVisible(true);
 
     uint now = QDateTime::currentDateTime().toTime_t();
-    this->graph->xAxis->setRange(now, now-604800);
+    this->graph->xAxis->setRange(now-604800, now+604800);
 
     ui->mainLayout->addWidget(this->graph);
 
@@ -60,13 +62,22 @@ void DateGraph::Replot()
         this->graph->removeGraph(i);
 
     this->graphCount = 0;
+    double high = 0;
 
     foreach (PlottableData plottable, this->plottableData)
     {
         this->graph->addGraph();
 
+        QCPScatterStyle myScatter;
+        myScatter.setShape(QCPScatterStyle::ssCircle);
+        myScatter.setPen(plottable.Color);
+        myScatter.setBrush(plottable.Color);
+        myScatter.setSize(5);
+        this->graph->graph(this->graphCount)->setScatterStyle(myScatter);
+
         QPen pen;
         pen.setColor(plottable.Color);
+        this->graph->graph(this->graphCount)->setVisible(true);
         this->graph->graph(this->graphCount)->setLineStyle(QCPGraph::lsLine);
         this->graph->graph(this->graphCount)->setPen(pen);
         this->graph->graph(this->graphCount)->setBrush(QBrush(plottable.Color));
@@ -74,18 +85,20 @@ void DateGraph::Replot()
         QVector<double> time, data;
         time.clear();
         data.clear();
-
         //Very slow..needs replacement for beta..rushing a release
         foreach (Project::EntryList list, project->DataLists)
         {
             if(list.Descriptor.ID == plottable.Descriptor.ID)
             {
-                this->graph->graph(this->graphCount)->setName(list.Descriptor.Name);
+                this->graph->graph(this->graphCount)->setName(plottable.Descriptor.Name);
 
                 foreach(DataEntry entry, list.DataList)
                 {
                     time.append(entry.Timestamp.toTime_t());
                     data.append(entry.GetValue());
+
+                    if(entry.GetValue() > high)
+                        high = entry.GetValue();
                 }
 
                 this->graph->graph(this->graphCount)->setData(time,data);
@@ -96,5 +109,7 @@ void DateGraph::Replot()
         this->graphCount++;
     }
 
+    this->graph->yAxis->setRange(0, high + 2);
+    this->graph->replot();
     this->graph->legend->setVisible(true);
 }

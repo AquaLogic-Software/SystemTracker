@@ -54,6 +54,8 @@ public:
     void OpenView();
     void SetGraphs(QList<DataGraph*> graphs);
 
+    virtual void closeEvent(QCloseEvent *event);
+
 private slots:
 
     void on_applyRangeButton_clicked();
